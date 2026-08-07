@@ -4,110 +4,46 @@
     <div v-if="copied" class="top-success-toast">
       复制成功
     </div>
-    <!-- 常驻悬浮分享按钮 (H5 / 移动端与桌面端通用) -->
-    <button class="floating-share-btn" @click="showShareGuide = true">
-      <svg class="share-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="18" cy="5" r="3"></circle>
-        <circle cx="6" cy="12" r="3"></circle>
-        <circle cx="18" cy="19" r="3"></circle>
-        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-      </svg>
-      <span>分享法律工具</span>
-    </button>
-
     <header>
       <h1>{{ appTitle }}</h1>
-      <p>法律事实梳理 · 风险漏洞诊断 · 维权诉讼策略 · 条款修改防范</p>
+      <p>智能 AI 实战引擎 · 解决高效生产力需求</p>
     </header>
 
-    <!-- 动态广播轮播 -->
+    <!-- 活跃动态 -->
     <UserTicker />
 
-    <!-- 核心操作区卡片 -->
+    <!-- 核心卡片 -->
     <main ref="inputCardRef" class="glass-card input-group">
-      <!-- 法律咨询类型选择 -->
       <div class="selector-group">
-        <label class="selector-label">选择法律咨询类型</label>
+        <label class="selector-label">输入您要生成的内容或要求</label>
+        <textarea 
+          v-model="userInput" 
+          placeholder="比如：帮我写一段表达工作辛苦但充满希望的总结..."
+        ></textarea>
+      </div>
+
+      <div class="selector-group">
+        <label class="selector-label">选择生成风格</label>
         <div class="style-selector">
           <button 
-            v-for="ltype in legalTypeOptions" 
-            :key="ltype.value"
+            v-for="style in styleOptions" 
+            :key="style.value"
             class="style-option"
-            :class="{ active: activeLegalType === ltype.value }"
-            @click="activeLegalType = ltype.value"
+            :class="{ active: activeStyle === style.value }"
+            @click="activeStyle = style.value"
           >
-            {{ ltype.label }}
+            {{ style.label }}
           </button>
         </div>
       </div>
 
-      <!-- 涉及法律领域与咨询身份 -->
-      <div class="options-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-        <div class="selector-group">
-          <label class="selector-label">涉及法律领域</label>
-          <div class="style-selector">
-            <button 
-              v-for="field in legalFieldOptions" 
-              :key="field"
-              class="style-option"
-              :class="{ active: selectedLegalField === field }"
-              @click="selectedLegalField = field"
-            >
-              {{ field }}
-            </button>
-          </div>
-        </div>
-
-        <div class="selector-group">
-          <label class="selector-label">咨询身份</label>
-          <div class="style-selector">
-            <button 
-              v-for="role in roleIdentityOptions" 
-              :key="role"
-              class="style-option"
-              :class="{ active: selectedRoleIdentity === role }"
-              @click="selectedRoleIdentity = role"
-            >
-              {{ role }}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- 案情与合同条款描述输入框 -->
-      <div class="selector-group">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <label class="selector-label">输入纠纷案情描述、违约争议背景或合同争议条款</label>
-          <div style="display: flex; gap: 0.5rem;">
-            <button v-if="userInput" class="text-link-btn" @click="userInput = ''">清空输入</button>
-            <button class="text-link-btn" @click="showLegalTipsModal = true">诉讼时效与证据链保存防范指南</button>
-          </div>
-        </div>
-        <textarea 
-          v-model="userInput" 
-          placeholder="请简要描述您的法律诉求或案情...（例如：我在公司工作 3 年，公司口头通知解除劳动合同且拒绝支付 N+1 补偿及未结清加班费，手头有考勤记录与工作微信截图，希望评估维权胜诉率并制定劳动仲裁起诉书要点。）"
-          style="min-height: 130px;"
-        ></textarea>
-        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary);">
-          <span>字符数: {{ userInput.length }} 字</span>
-          <span>建议包含发生经过、争议金额、已有证据及期望解决目标</span>
-        </div>
-      </div>
-
-      <!-- 操作按钮区 -->
-      <div style="display: flex; gap: 0.75rem;">
-        <button 
-          class="action-btn" 
-          :disabled="loading || !userInput.trim()"
-          @click="handleGenerate"
-        >
-          {{ loading ? '正在精准检索适用法条与诊断法律风险中...' : '开始生成法律咨询与合规报告' }}
-        </button>
-        <button class="icon-btn" style="padding: 0 1rem; border-radius: 10px;" @click="toggleHistoryDrawer">
-          历史记录 ({{ historyList.length }})
-        </button>
-      </div>
+      <button 
+        class="action-btn" 
+        :disabled="loading || !userInput.trim()"
+        @click="handleGenerate"
+      >
+        {{ loading ? '正在飞速生成中...' : '开始一键生成' }}
+      </button>
 
       <!-- 异常提示 -->
       <div v-if="errorMsg" style="color: var(--accent-color); font-size: 0.85rem; text-align: center; margin-top: 0.5rem;">
@@ -118,140 +54,37 @@
     <!-- 生成结果卡片 -->
     <section v-if="result || loading" class="glass-card">
       <div class="result-header">
-        <span class="result-title">法律咨询与合同合规评估报告</span>
+        <span class="result-title">生成结果</span>
         <div class="button-actions">
-          <button v-if="result" class="icon-btn" @click="copyText">
-            {{ copied ? '已复制报告全文' : '复制法律报告' }}
+          <button v-if="result && !isImageProject" class="icon-btn" @click="copyText">
+            {{ copied ? '已复制' : '复制文案' }}
           </button>
-          <button v-if="result" class="icon-btn" @click="resetResult">
-            重置
-          </button>
+          <a v-if="result && isImageProject" :href="result" target="_blank" download class="icon-btn" style="text-decoration: none;">
+            查看原图
+          </a>
         </div>
       </div>
 
       <!-- 加载中骨架屏 -->
       <div v-if="loading" class="skeleton">
-        <div class="skeleton-line" style="width: 85%"></div>
+        <div class="skeleton-line" style="width: 80%"></div>
         <div class="skeleton-line" style="width: 95%"></div>
-        <div class="skeleton-line" style="width: 70%"></div>
-        <div class="skeleton-line" style="width: 90%"></div>
         <div class="skeleton-line" style="width: 60%"></div>
       </div>
 
       <!-- 渲染结果 -->
       <div v-else-if="result">
-        <!-- AI 共识打分可视化看板 -->
-        <div v-if="aiScores" class="scores-container" style="margin-bottom: 1.5rem; padding: 1.25rem; background: rgba(0,0,0,0.25); border-radius: 12px; border: 1px solid rgba(255,255,255,0.06);">
-          <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 1rem; color: #a5b4fc; display: flex; justify-content: space-between; align-items: center;">
-            <span>AI 法律合规与维权方案评估看板</span>
-            <span style="font-size: 0.8rem; font-weight: normal; color: var(--text-secondary);">综合质量分: {{ getAverageScoreFromMap(aiScores) }} / 5.0</span>
-          </div>
-          <div class="metrics-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem;">
-            <div v-for="metric in metricsList" :key="metric.key" class="metric-item">
-              <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 0.3rem;">
-                <span style="color: var(--text-secondary);">{{ metric.label }}</span>
-                <span style="font-weight: bold; color: var(--accent-color);">{{ aiScores[metric.key] || 4 }} / 5</span>
-              </div>
-              <div class="bar-bg" style="height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden;">
-                <div class="bar-fill" :style="{ width: ((aiScores[metric.key] || 4) * 20) + '%', background: 'var(--primary-gradient)', height: '100%', borderRadius: '3px', transition: 'width 0.5s ease' }"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="output-content">{{ displayResultText }}</div>
+        <img v-if="isImageProject" :src="result" alt="Generated visual" class="image-output" />
+        <div v-else class="output-content">{{ result }}</div>
       </div>
     </section>
 
-    <!-- 历史记录面板 -->
-    <section v-if="showHistory" class="glass-card" style="margin-top: 1rem;">
-      <div class="result-header">
-        <span class="result-title">本地法律咨询历史记录</span>
-        <button class="icon-btn" @click="showHistory = false">关闭记录</button>
-      </div>
-
-      <div v-if="historyList.length === 0" style="text-align: center; color: var(--text-secondary); padding: 1.5rem; font-size: 0.85rem;">
-        暂无历史法律咨询记录，开始诊断属于您的法律诉求吧！
-      </div>
-
-      <div v-else class="history-grid" style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 320px; overflow-y: auto;">
-        <div v-for="item in historyList" :key="item.id" class="history-item" style="padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 10px; border: 1px solid var(--card-border);">
-          <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.4rem;">
-            <span>{{ item.timestamp }} · [{{ item.legalType }} / {{ item.legalField }}]</span>
-            <span style="color: var(--primary-color);">评分: {{ getAverageScore(item) }}</span>
-          </div>
-          <div style="font-size: 0.85rem; font-weight: bold; margin-bottom: 0.4rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-primary);">
-            案情: {{ item.input }}
-          </div>
-          <div style="display: flex; gap: 0.5rem;">
-            <button class="icon-btn" style="font-size: 0.75rem;" @click="applyHistory(item)">套用案情</button>
-            <button class="icon-btn" style="font-size: 0.75rem;" @click="viewHistoryOutput(item)">查看报告全文</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 法律合规模板 Showcase -->
+    <!-- PC端 Nomads 案例与模版展示 -->
     <NomadsShowcase
+      :app-title="appTitle"
+      :is-image="isImageProject"
       @apply-template="handleApplyTemplate"
     />
-
-    <!-- 诉讼时效与证据链保存防范指南 Modal -->
-    <div v-if="showLegalTipsModal" class="modal-overlay" @click.self="showLegalTipsModal = false">
-      <div class="modal-content" style="max-width: 480px;">
-        <h3>诉讼时效与证据链保存防范指南</h3>
-        <p style="text-align: left; font-size: 0.825rem; margin-bottom: 1rem; color: var(--text-secondary);">
-          保障自身合法权益与胜诉率的核心控制法则：
-        </p>
-        <div class="modal-scroll-area" style="text-align: left; font-size: 0.825rem;">
-          <div v-for="(rule, idx) in legalRules" :key="idx" style="margin-bottom: 0.75rem; padding: 0.5rem 0.75rem; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
-            <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 0.2rem;">{{ rule.title }}</div>
-            <div style="color: var(--text-primary); margin-bottom: 0.2rem;">实操建议: {{ rule.advice }}</div>
-            <div style="color: var(--text-secondary); font-size: 0.775rem;">避坑红线: {{ rule.avoid }}</div>
-          </div>
-        </div>
-        <button class="modal-btn" style="margin-top: 1rem;" @click="showLegalTipsModal = false">关闭</button>
-      </div>
-    </div>
-
-    <!-- 微信 H5 悬浮分享引导 Modal -->
-    <div v-if="showShareGuide" class="modal-overlay" @click.self="showShareGuide = false">
-      <div class="modal-content">
-        <h3>分享法律咨询与合同合规工具</h3>
-        <p>扫码关注或将链接转发给需要法律咨询与合同诊断的朋友，轻松维权规避风险。</p>
-        
-        <div class="qr-code-placeholder">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
-            <rect width="100" height="100" fill="white"/>
-            <rect x="5" y="5" width="25" height="25" fill="#110e24"/>
-            <rect x="9" y="9" width="17" height="17" fill="white"/>
-            <rect x="13" y="13" width="9" height="9" fill="#110e24"/>
-            <rect x="70" y="5" width="25" height="25" fill="#110e24"/>
-            <rect x="74" y="9" width="17" height="17" fill="white"/>
-            <rect x="78" y="13" width="9" height="9" fill="#110e24"/>
-            <rect x="5" y="70" width="25" height="25" fill="#110e24"/>
-            <rect x="9" y="74" width="17" height="17" fill="white"/>
-            <rect x="13" y="78" width="9" height="9" fill="#110e24"/>
-            <rect x="35" y="10" width="8" height="8" fill="#110e24"/>
-            <rect x="48" y="5" width="6" height="12" fill="#110e24"/>
-            <rect x="60" y="15" width="5" height="5" fill="#110e24"/>
-            <rect x="35" y="35" width="10" height="10" fill="#110e24"/>
-            <rect x="50" y="45" width="15" height="8" fill="#110e24"/>
-            <rect x="40" y="70" width="8" height="16" fill="#110e24"/>
-            <rect x="55" y="65" width="10" height="10" fill="#110e24"/>
-            <rect x="75" y="40" width="12" height="12" fill="#110e24"/>
-            <rect x="75" y="75" width="15" height="15" fill="#110e24"/>
-            <rect x="45" y="80" width="8" height="8" fill="#110e24"/>
-          </svg>
-        </div>
-
-        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1.5rem;">
-          微信号: <span style="color: var(--primary-color); font-weight: bold;">{{ wechatId }}</span>
-        </div>
-
-        <button class="modal-btn" @click="showShareGuide = false">关闭</button>
-      </div>
-    </div>
 
     <!-- 底部隐私与服务条款链接 -->
     <footer class="footer-links">
@@ -268,8 +101,8 @@
       <div class="modal-content">
         <h3>Privacy Policy</h3>
         <div class="modal-text-content modal-scroll-area">
-          <p>我们非常重视您的隐私与法律涉案信息安全。您在本工具中输入的所有案情描述与合同文本仅用于 AI 实时诊断分析，系统不会在云端公开或留存您的隐私数据。</p>
-          <p>为了保障免费使用额度，本应用会在您的浏览器本地（localStorage）记录试用次数与解锁状态。</p>
+          <p>我们非常重视您的隐私。您在本应用中输入的所有文本或图像提示词仅用于实时大模型生成，我们不会在服务器端进行永久存储或记录。</p>
+          <p>为了记录您的免费额度，本应用会在您的浏览器本地（localStorage）记录试用次数与解锁状态。</p>
         </div>
         <button class="modal-btn" @click="showPrivacy = false">关闭</button>
       </div>
@@ -280,14 +113,14 @@
       <div class="modal-content">
         <h3>Terms of Service</h3>
         <div class="modal-text-content modal-scroll-area">
-          <p>欢迎使用网腾无限 AI 法律咨询与合同合规专家。本工具生成的法律分析意见、证据清单及合同修改建议仅供法律合规研析与维权参考。</p>
-          <p>如需提起诉讼或签订重大商业合同，建议结合实际案情咨询具有执业资格的律师以获取具名法律意见书。</p>
+          <p>欢迎使用我们的 AI 微应用服务。使用本应用即代表您同意并承诺遵守当地有关人工智能生成内容（AIGC）的法律法规。</p>
+          <p>所有生成结果均由 AI 模型计算产生，本应用不对生成内容的准确性、完整性及合法性承担任何直接或间接法律责任。</p>
         </div>
         <button class="modal-btn" @click="showTerms = false">关闭</button>
       </div>
     </div>
 
-    <!-- 联系我们弹窗 -->
+<!-- 联系我们弹窗 -->
     <div v-if="showContact" class="modal-overlay" @click.self="showContact = false">
       <div class="modal-content contact-modal-content">
         <h3>Contact Us</h3>
@@ -327,8 +160,13 @@ import appConfig from './config.json';
 import weixinImg from '../asset/weixin.png';
 import dingtalkImg from '../asset/dingtalk.png';
 
-// 配置参数
-const appTitle = ref(appConfig.title || '网腾无限AI - 法律咨询与合同合规专家');
+onMounted(() => {
+  const savedTheme = localStorage.getItem('portal_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+});
+
+// 读取动态配置文件配置
+const appTitle = ref(appConfig.title || 'AI微应用');
 const wechatId = ref(appConfig.wechatId || 'ai_wuxian_xyz');
 const promptTopic = ref(appConfig.promptTopic || '');
 
@@ -338,15 +176,12 @@ const loading = ref(false);
 const errorMsg = ref('');
 const result = ref('');
 const copied = ref(false);
-
 const showFission = ref(false);
 const showPrivacy = ref(false);
 const showTerms = ref(false);
 const showContact = ref(false);
-const showShareGuide = ref(false);
-const showLegalTipsModal = ref(false);
 
-// 解析 Cookie
+// 解析 Cookie 辅助函数
 const getCookie = (name: string): string | null => {
   const nameEQ = name + "=";
   const ca = document.cookie.split(';');
@@ -358,150 +193,38 @@ const getCookie = (name: string): string | null => {
   return null;
 };
 
-// 用户登录状态
+// SSO 用户状态
 const userToken = ref(getCookie('wuxian_session'));
 const isLoggedIn = computed(() => !!userToken.value);
 const authUsesCount = ref(parseInt(localStorage.getItem('auth_uses') || '0', 10));
 
-// 法律咨询类型预设
-const legalTypeOptions = [
-  { label: '劳动纠纷与加班赔偿维权', value: '劳动纠纷与加班赔偿维权' },
-  { label: '商业合同诊断与条款修改', value: '商业合同诊断与条款修改' },
-  { label: '婚姻家事与财产分割咨询', value: '婚姻家事与财产分割咨询' },
-  { label: '消费维权与侵权赔偿方案', value: '消费维权与侵权赔偿方案' }
-];
-const activeLegalType = ref(legalTypeOptions[0].value);
-
-// 涉及法律领域与咨询身份
-const legalFieldOptions = ['民商法', '劳动合同法', '知识产权法', '公司法', '刑法行政法'];
-const selectedLegalField = ref('民商法');
-
-const roleIdentityOptions = ['个人消费者', '劳动者员工', '企业HR', '公司法务CFO'];
-const selectedRoleIdentity = ref('劳动者员工');
-
-// 评估指标列表
-const metricsList = [
-  { key: 'legalBasisAccuracy', label: '法条依据准确度' },
-  { key: 'riskWarningSensitivity', label: '合规风险敏感度' },
-  { key: 'clauseClarity', label: '合同条款严密性' },
-  { key: 'disputeResolutionFeasibility', label: '维权方案可行度' },
-  { key: 'rightsProtectionRigor', label: '权益保障严谨度' }
-];
-
-const aiScores = ref<Record<string, number> | null>(null);
-
-// 历史记录定义
-interface HistoryItem {
-  id: string;
-  timestamp: string;
-  legalType: string;
-  legalField: string;
-  roleIdentity: string;
-  input: string;
-  aiScores: Record<string, number> | null;
-  output: string;
-}
-
-const historyList = ref<HistoryItem[]>([]);
-const showHistory = ref(false);
-
-// 法律实务指南法则
-const legalRules = [
-  { title: '劳动仲裁1年时效法则', advice: '劳动争议申请仲裁的时效期间为一年，从知道或应当知道权利受侵害之日起计算，务必及时申请', avoid: '切忌因拖延协商导致错过法定一年的仲裁申请时效' },
-  { title: '电子证据固化法则', advice: '微信沟通记录、电子邮件及考勤截图应完整保留上下文并进行公证或区块链存证', avoid: '切勿单张截图或选择性删除不利聊天记录' },
-  { title: '书面催告与留痕法则', advice: '出现违约争议时应先通过 EMS 邮寄书面催告函或律师函，保留邮寄凭单与签收记录', avoid: '切勿仅口头交涉而不留存任何书面催告凭证' }
-];
-
-// 计算纯结果文本 (剔除打分标签 [FALV_SCORES])
-const displayResultText = computed(() => {
-  if (!result.value) return '';
-  return result.value.replace(/\[FALV_SCORES\][\s\S]*?\[\/FALV_SCORES\]/g, '').trim();
+// 判断当前项目是文本类还是图像/多模态类
+const isImageProject = computed(() => {
+  return appConfig.type === 'image';
 });
 
-// 解析打分标签
-const parseAiScores = (rawText: string) => {
-  const match = rawText.match(/\[FALV_SCORES\](.*?)\[\/FALV_SCORES\]/);
-  if (!match) return null;
-  const content = match[1];
-  const scoresObj: Record<string, number> = {};
-  content.split(',').forEach(item => {
-    const [key, val] = item.split(':');
-    if (key && val) {
-      scoresObj[key.trim()] = parseInt(val.trim(), 10) || 4;
-    }
-  });
-  return Object.keys(scoresObj).length > 0 ? scoresObj : null;
-};
-
-// 计算平均分
-const getAverageScoreFromMap = (scores: Record<string, number>) => {
-  const keys = Object.keys(scores);
-  if (keys.length === 0) return '4.5';
-  const sum = keys.reduce((acc, k) => acc + (scores[k] || 4), 0);
-  return (sum / keys.length).toFixed(1);
-};
-
-const getAverageScore = (item: HistoryItem) => {
-  if (!item.aiScores) return '4.5';
-  return getAverageScoreFromMap(item.aiScores);
-};
-
-// 本地历史记录读取与保存
-const loadHistory = () => {
-  try {
-    const raw = localStorage.getItem('falv_history_records');
-    historyList.value = raw ? JSON.parse(raw) : [];
-  } catch (e) {
-    historyList.value = [];
+// 根据生成类别提供不同的风格预设
+const styleOptions = computed(() => {
+  if (isImageProject.value) {
+    return [
+      { label: '写真照片', value: '<photography>' },
+      { label: '卡通动漫', value: '<anime>' },
+      { label: '水彩画卷', value: '<watercolor>' },
+      { label: '插画艺术', value: '<illustration>' },
+    ];
+  } else {
+    return [
+      { label: '专业干练', value: '专业干练，结果导向' },
+      { label: '高情商说辞', value: '高情商，委婉，有情调' },
+      { label: '幽默风趣', value: '幽默风趣，形象生动' },
+      { label: '严谨学术', value: '严谨学术，条理清晰' },
+    ];
   }
-};
+});
 
-const saveHistory = () => {
-  localStorage.setItem('falv_history_records', JSON.stringify(historyList.value));
-};
+const activeStyle = ref(styleOptions.value[0].value);
 
-const addHistoryRecord = () => {
-  const newItem: HistoryItem = {
-    id: Date.now().toString(),
-    timestamp: new Date().toLocaleString(),
-    legalType: activeLegalType.value,
-    legalField: selectedLegalField.value,
-    roleIdentity: selectedRoleIdentity.value,
-    input: userInput.value,
-    aiScores: aiScores.value,
-    output: result.value
-  };
-  historyList.value.unshift(newItem);
-  if (historyList.value.length > 20) {
-    historyList.value = historyList.value.slice(0, 20);
-  }
-  saveHistory();
-};
-
-const toggleHistoryDrawer = () => {
-  loadHistory();
-  showHistory.value = !showHistory.value;
-};
-
-const applyHistory = (item: HistoryItem) => {
-  userInput.value = item.input;
-  activeLegalType.value = item.legalType;
-  selectedLegalField.value = item.legalField;
-  selectedRoleIdentity.value = item.roleIdentity;
-  showHistory.value = false;
-  if (inputCardRef.value) {
-    inputCardRef.value.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
-};
-
-const viewHistoryOutput = (item: HistoryItem) => {
-  userInput.value = item.input;
-  result.value = item.output;
-  aiScores.value = item.aiScores;
-  showHistory.value = false;
-};
-
-// 限制与额度检测
+// 判断是否达到免费次数上限
 const isLimitReached = computed(() => {
   if (isLoggedIn.value) {
     return authUsesCount.value >= 15;
@@ -511,6 +234,7 @@ const isLimitReached = computed(() => {
   return uses >= 3 && !shared;
 });
 
+// 获取 API 请求端点
 const apiEndpoint = import.meta.env.DEV
   ? '/api/local/generate'
   : (import.meta.env.VITE_API_ENDPOINT || 'https://api.wuxian.xyz/api/v1/generate');
@@ -524,7 +248,6 @@ const handleGenerate = async () => {
   loading.value = true;
   errorMsg.value = '';
   result.value = '';
-  aiScores.value = null;
 
   try {
     const response = await fetch(apiEndpoint, {
@@ -534,9 +257,9 @@ const handleGenerate = async () => {
       },
       credentials: 'include',
       body: JSON.stringify({
-        taskType: 'text',
-        prompt: `任务指导: ${promptTopic.value}\n【法律咨询类型】: ${activeLegalType.value}\n【涉及法律领域】: ${selectedLegalField.value}\n【咨询身份】: ${selectedRoleIdentity.value}\n【纠纷/案情描述】: ${userInput.value}`,
-        style: activeLegalType.value
+        taskType: isImageProject.value ? 'image' : 'text',
+        prompt: `类型：${promptTopic.value}，要求：${userInput.value}，风格倾向：${activeStyle.value}`,
+        style: activeStyle.value
       })
     });
 
@@ -545,10 +268,7 @@ const handleGenerate = async () => {
       errorMsg.value = data.error;
     } else {
       result.value = data.result;
-      aiScores.value = parseAiScores(data.result);
       
-      addHistoryRecord();
-
       if (isLoggedIn.value) {
         const nextAuthUses = authUsesCount.value + 1;
         localStorage.setItem('auth_uses', nextAuthUses.toString());
@@ -565,11 +285,11 @@ const handleGenerate = async () => {
   }
 };
 
-const handleApplyTemplate = (payload: { prompt: string; legalType?: string; legalField?: string; roleIdentity?: string }) => {
+const handleApplyTemplate = (payload: { prompt: string; style?: string }) => {
   userInput.value = payload.prompt;
-  if (payload.legalType) activeLegalType.value = payload.legalType;
-  if (payload.legalField) selectedLegalField.value = payload.legalField;
-  if (payload.roleIdentity) selectedRoleIdentity.value = payload.roleIdentity;
+  if (payload.style) {
+    activeStyle.value = payload.style;
+  }
   if (inputCardRef.value) {
     inputCardRef.value.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
@@ -580,14 +300,9 @@ const handleUnlocked = () => {
   handleGenerate();
 };
 
-const resetResult = () => {
-  result.value = '';
-  aiScores.value = null;
-};
-
 const copyText = async () => {
   try {
-    await navigator.clipboard.writeText(displayResultText.value);
+    await navigator.clipboard.writeText(result.value);
     copied.value = true;
     setTimeout(() => {
       copied.value = false;
@@ -596,23 +311,4 @@ const copyText = async () => {
     errorMsg.value = '复制失败，请手动选择复制。';
   }
 };
-
-onMounted(() => {
-  loadHistory();
-});
 </script>
-
-<style scoped>
-.text-link-btn {
-  background: none;
-  border: none;
-  color: #a5b4fc;
-  font-size: 0.775rem;
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-.text-link-btn:hover {
-  color: var(--text-primary);
-  text-decoration: underline;
-}
-</style>
